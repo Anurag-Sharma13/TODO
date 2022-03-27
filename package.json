@@ -1,0 +1,21 @@
+{
+  "name": "nodepg",
+  "version": "1.0.0",
+  "description": "connecting node server with pg.",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Anurag",
+  "license": "ISC",
+  "dependencies": {
+    "db-migrate": "^0.11.13",
+    "db-migrate-pg": "^1.2.2",
+    "express": "^4.17.3",
+    "jsonwebtoken": "^8.5.1",
+    "node-pg-migrate": "^6.2.1",
+    "nodemon": "^2.0.15",
+    "pg": "^8.7.3"
+  }
+}
