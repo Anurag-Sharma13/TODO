@@ -40,13 +40,14 @@ router.post('/register',async (req, res) => {
 
 router.post('/login',async (req, res) => {
     const { email, password } = req.body
-    console.log(email,password)
+    // console.log(email,password)
     try{
         if(email && password){
             const sql = `SELECT * FROM users WHERE email=$1 AND password=$2`
             const result =  await pool.query(sql,[email,password])
             res.status(200).json({message:'User Logged In Succesfully.',data:result.rows})
-            createToken()
+            // console.log(result.rows[0].id)
+            createToken(result.rows[0].id)
             
         }
         else{
@@ -61,8 +62,8 @@ router.post('/login',async (req, res) => {
 
 
 //Getting all the task with active,completed or with both the status
-router.get('/all_task', async (req, res) => {
-    console.log('hsjkafh')
+router.get('/all_task',authenticate, async (req, res) => {
+    // console.log('hsjkafh')
     let complete = req.query.complete
     if (!complete) {
         complete = null

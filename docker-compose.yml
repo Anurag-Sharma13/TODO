@@ -11,4 +11,4 @@ services:
       - POSTGRES_PASSWORD=cancer
       - POSTGRES_DB=todo
 
-# docker-compose up -d or docker compose up -d     
+# docker-compose up -d or docker compose up -d 

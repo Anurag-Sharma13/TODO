@@ -1,19 +1,17 @@
 const jwt = require('jsonwebtoken')
 const secretKey = "youhavetobeverycarefulaboutthesecretkey"
 
-const createToken = async () => {
+const createToken = async (userID) => {
     try {
-
-        const token = await jwt.sign({id:"retrsaf",expiryTime:'2m'}, secretKey)
+        // console.log(userID)
+        const token = await jwt.sign({id:userID,expiryTime:'2m'}, secretKey)
         console.log(token)
     }
     catch (error) {
         console.log("token has not created")
     }
 
-}
-createToken()
-
+}   
 
 module.exports = { createToken, secretKey }
 
