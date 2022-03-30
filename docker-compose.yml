@@ -3,12 +3,15 @@ services:
   db:
     image: "postgres:13"
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=cancer
       - POSTGRES_DB=todo
+      # - PGDATA=/var/lib/postgresql/data/pgdata
 
-# docker-compose up -d or docker compose up -d 
+# docker-compose up -d or docker compose up -d     sudo rm -rf pgdata/
+# volumes:
+#   pgdata

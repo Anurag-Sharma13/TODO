@@ -10,7 +10,12 @@ const { createToken } = require('./utils')
 
 
 
-router.post('/register',async (req, res) => {
+
+
+
+
+
+router.post('/register',async (req, res, next) => {
     const { id,
         email,
         password,
@@ -31,80 +36,118 @@ router.post('/register',async (req, res) => {
         }
     }
     catch (error) {
-        res.status(500).send(error.message)
+        next(err)
+        // res.status(500).send(error.message)
     }
 
 
 })
 
 
-router.post('/login',async (req, res) => {
+router.post('/login',async (req, res,next) => {
     const { email, password } = req.body
     // console.log(email,password)
     try{
         if(email && password){
             const sql = `SELECT * FROM users WHERE email=$1 AND password=$2`
             const result =  await pool.query(sql,[email,password])
-            res.status(200).json({message:'User Logged In Succesfully.',data:result.rows})
             // console.log(result.rows[0].id)
-            createToken(result.rows[0].id)
-            
+            const token  = await createToken(result.rows[0].id)
+            res.status(200).json({
+                message:'User Logged In Succesfully.',
+                token
+            })
+   
         }
         else{
-            res.status(404).send(`Fields cannot be empty`)
+            res.status(400).send(`email and password is required`)
         }
     }
     catch(error){
-        res.status(404).send(`Please provide the right credentials for login.`)
+        next(err)
+        // res.status(400).send(`Please provide the right credentials for login.`)
     }
     
 })
 
 
 //Getting all the task with active,completed or with both the status
-router.get('/all_task',authenticate, async (req, res) => {
+router.get('/all_task',authenticate, async (req, res,next) => {
     // console.log('hsjkafh')
+    const userId = Number(req.userId)
+    // console.log(userId)
     let complete = req.query.complete
     if (!complete) {
         complete = null
     }
     // console.log(complete)
-    const sql = `SELECT * FROM tasks WHERE ($1::boolean IS NULL OR complete=$1) AND deleted=false`
+    const sql = `SELECT * FROM tasks WHERE ($1::boolean IS NULL OR complete=$1) AND deleted=false AND user_id=$2`
     try {
-        const result = await pool.query(sql, [complete])
+        const result = await pool.query(sql, [complete,userId])
         res.status(200).json({ data: result.rows })
     }
     catch (error) {
-        res.status(404).send(error.message)
+        next(err)
+        // res.status(404).send(error.message)
     }
 })
 
 
 //Creating a new task into the list
-router.post('/create',authenticate, async (req, res) => {
-    const sql = `INSERT INTO tasks(id,label,complete) VALUES($1,$2,$3) returning *`
+router.post('/create',authenticate, async (req, res,next) => {
+    const userId = Number(req.userId)
+    const sql = `INSERT INTO tasks(id,label,complete,user_id) VALUES($1,$2,$3,$4) returning *`
     try {
         const { id, label, complete } = req.body
-        const result = await pool.query(sql, [id, label, complete])
+        const result = await pool.query(sql, [id, label, complete,userId])
         res.status(200).json({ message: 'Item Created Successfully.', data: result.rows })
     }
     catch (error) {
-        res.status(404).send(error.message)
+        next(err)
+        // res.status(404).json(error.message)
+    }
+})
+
+
+
+//Updating a task in the list
+router.put('/change/:id',authenticate,async(req,res,next)=>{
+    const { id } = req.params
+    const {label,complete} = req.body
+    const sql = `Update tasks SET label=$2,complete=$3 WHERE id=$1`
+    try{
+        const result = await pool.query(sql,[id,label,complete])
+        res.status(200).json({message:"Item updated Successfully",data:result.rows})
+    }
+    catch(error){
+        next(err)
+        // res.status(400).json('Please provide the right ID.')
     }
 })
 
 
 
 //Deleting a task from the list
-router.delete('/delete/:id',authenticate, async (req, res) => {
+router.delete('/delete/:id',authenticate, async (req, res,next) => {
     const { id } = req.params
+    // const userId = Number(req.userId)
     const sql = `UPDATE tasks SET deleted=true WHERE id=$1`
     try {
         const result = await pool.query(sql, [id])
         res.status(200).json({ message: 'Item Deleted Successfully.', data: result.rows })
     }
     catch (error) {
-        res.status(404).send(error.message)
+        next(err)
+        // res.status(404).send(error.message)
+    }
+})
+
+router.use((err, req, res, next) => {
+    if (err) {
+        res.status(500).json({
+            message: 'internal server error',
+            error: err.message
+        })
     }
 })
 

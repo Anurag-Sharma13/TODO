@@ -1,6 +1,9 @@
 const express = require('express')
+const { append } = require('express/lib/response')
 const router = express.Router()
 const {client,pool} = require('./connection')
+
+router.use()
 
 
 
