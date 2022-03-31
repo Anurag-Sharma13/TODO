@@ -5,55 +5,15 @@ const router = express.Router()
 const { pool } = require('./connection')
 const authenticate = require('./Middlewares/auth')
 const { createToken } = require('./utils')
-const check = require('./Middlewares/validation')
-
-
-const schemas = require('./schema')
-
+const {regSchema,logSchema} = require('./Joi-Validation')
+const {validate} = require('express-validation')
 
 
 
 
 
-
-
-
-
-
-
-// router.post('/register',async (req, res, next) => {
-//     const { id,
-//         email,
-//         password,
-//         firstname,
-//         lastname,
-//         mobilenumber } = req.body
-
-//     try {
-//         if (id && email && password && firstname && lastname && mobilenumber) {
-//             const sql = `INSERT INTO users(id,email,password,firstname,lastname,mobilenumber) 
-//                      VALUES($1,$2,$3,$4,$5,$6) returning *`
-//             const result = await pool.query(sql, [id, email, password, firstname, lastname, mobilenumber])
-//             res.status(200).json({ message: 'User has been Registered.', data: result.rows })
-
-//         }
-//         else {
-//             res.status(400).send("Fields cannot be null.")
-//         }
-//     }
-//     catch (error) {
-//         next(err)
-//         // res.status(500).send(error.message)
-//     }
-
-
-// })
-
-
-
-
-//Routes with JOI Validation
-router.post('/register',check(schemas,'regSchema'),async(req, res, next) => {
+//Registering the user in the user table
+router.post('/register', validate(regSchema),async(req, res, next) => {  //,check(schemas,'regSchema')
     const { id,
         email,
         password,
@@ -78,42 +38,8 @@ router.post('/register',check(schemas,'regSchema'),async(req, res, next) => {
 
 
 
-
-
-// router.post('/login',async (req, res, next) => {
-//     const { email, password } = req.body
-//     // console.log(email,password)
-//     try {
-//         if (email && password) {
-//             const sql = `SELECT * FROM users WHERE email=$1 AND password=$2`
-//             const result = await pool.query(sql, [email, password])
-//             // console.log(result.rows[0].id)
-//             const token = await createToken(result.rows[0].id)
-//             res.status(200).json({
-//                 message: 'User Logged In Succesfully.',
-//                 token
-//             })
-
-//         }
-//         else {
-//             res.status(400).send(`email and password is required`)
-//         }
-//     }
-//     catch (error) {
-//         next(err)
-//         // res.status(400).send(`Please provide the right credentials for login.`)
-//     } 
-
-// })
-
-
-
-
-
-
-
-
-router.post('/login',check(schemas,'logSchema'),async (req, res, next) => {
+//Login of the user for TODO list
+router.post('/login',validate(logSchema),async (req, res, next) => {     
     const { email, password } = req.body
     // console.log(email,password)
     try {
@@ -135,16 +61,15 @@ router.post('/login',check(schemas,'logSchema'),async (req, res, next) => {
 })
 
 
+
+
 //Getting all the task with active,completed or with both the status
 router.get('/tasks', authenticate, async (req, res, next) => {
-    // console.log('hsjkafh')
     const userId = Number(req.userId)
-    // console.log(userId)
     let complete = req.query.complete
     if (!complete) {
         complete = null
     }
-    // console.log(complete)
     const sql = `SELECT * FROM tasks WHERE ($1::boolean IS NULL OR complete=$1) AND deleted=false AND user_id=$2`
     try {
         const result = await pool.query(sql, [complete, userId])
@@ -155,6 +80,8 @@ router.get('/tasks', authenticate, async (req, res, next) => {
         // res.status(404).send(error.message)
     }
 })
+
+
 
 
 //Creating a new task into the list
@@ -194,10 +121,11 @@ router.put('/change-task/:id', authenticate, async (req, res, next) => {
 
 
 
+
+
 //Deleting a task from the list
 router.delete('/delete-task/:id', authenticate, async (req, res, next) => {
     const { id } = req.params
-    // const userId = Number(req.userId)
     const sql = `UPDATE tasks SET deleted=true WHERE id=$1`
     try {
         const result = await pool.query(sql, [id])
@@ -209,13 +137,19 @@ router.delete('/delete-task/:id', authenticate, async (req, res, next) => {
     }
 })
 
+
+
+
+//Handeling the error through middlewares
 router.use((err, req, res, next) => {
-    if (err) {
-        res.status(500).json({
-            message: 'internal server error',
-            error: err.message
-        })
+    if(err.statusCode && err.statusCode !== 500) {
+        res.status(err.statusCode).send(err)
+        return
     }
+    res.status(500).json({
+        message: 'internal server error',
+        error: err.message
+    })
 })
 
 
