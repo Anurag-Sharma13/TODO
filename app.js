@@ -1,7 +1,8 @@
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
-const router = require('./updatedRoutes')
+const router = require('./src/routes/updatedRoutes')
+
 
 
 
